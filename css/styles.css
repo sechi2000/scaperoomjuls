@@ -1,0 +1,145 @@
+:root {
+    --bg: #000;
+    --green: #00ff66;
+    --cyan: #00ffff;
+    --error: #ff3333;
+    --gold: #ffd700;
+}
+
+* {
+    box-sizing: border-box
+}
+
+html,
+body {
+    height: 100%
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--green);
+    font-family: "Courier New", Courier, monospace;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* App layout */
+#app {
+    height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 36px;
+}
+
+#screen {
+    width: 100%;
+    max-width: 980px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    font-size: 1.05rem;
+    padding: 28px;
+    border-radius: 6px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 50%),
+        rgba(0, 0, 0, 0.6);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 102, 0.06);
+    position: relative;
+    overflow: auto;
+}
+
+/* cursor blink */
+.blink {
+    animation: blink 1s steps(1) infinite
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0
+    }
+}
+
+/* terminal lines */
+.terminal-line {
+    margin-bottom: 10px
+}
+
+.success {
+    color: var(--green)
+}
+
+.error {
+    color: var(--error)
+}
+
+.note {
+    color: var(--cyan)
+}
+
+/* puzzle text */
+.puzzle-line {
+    margin-top: 16px;
+    color: var(--cyan)
+}
+
+/* glitch effect for headings */
+.glitch {
+    position: relative;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+}
+
+.glitch::before {
+    color: #ff0;
+    transform: translate(-2px, 0)
+}
+
+.glitch::after {
+    color: #0ff;
+    transform: translate(2px, 0);
+    opacity: 0.35
+}
+
+/* scanlines overlay */
+#screen::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+    background-size: 100% 22px;
+    mix-blend-mode: overlay;
+}
+
+/* small screens */
+@media (max-width:600px) {
+    #screen {
+        padding: 18px;
+        font-size: 1rem
+    }
+}
+
+/* input style (styled via JS injection but keep fallback) */
+input.terminal {
+    background: none;
+    outline: none;
+    border: none;
+    color: var(--green);
+    font-family: inherit;
+    font-size: 1.05rem;
+    width: 220px;
+}
