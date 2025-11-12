@@ -1,259 +1,283 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Protocolo 25 - Archivo Secreto</title>
-    <style>
-        body {
-            margin: 0;
-            background-color: #000;
-            color: #00ff66;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Protocolo 25 - Archivo Secreto</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #00ff66;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+    }
+    #screen {
+      padding: 20px;
+      white-space: pre-line;
+      font-size: 1.1em;
+    }
+    .hidden { display: none; }
+    .blink { animation: blink 1s infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
 
-        #screen {
-            padding: 20px;
-            white-space: pre-line;
-            font-size: 1.1em;
-        }
+    input {
+      background: none;
+      border: none;
+      color: #00ff66;
+      font-family: inherit;
+      font-size: 1.1em;
+      outline: none;
+      width: 200px;
+    }
 
-        .hidden {
-            display: none;
-        }
+    .terminal-line { margin-bottom: 10px; }
+    .success { color: #00ff66; }
+    .error { color: #ff3333; }
+    .puzzle-line { margin-top: 20px; color: #00ffff; }
 
-        .blink {
-            animation: blink 1s infinite;
-        }
+    .download-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #00ff66;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+    .download-button:hover { background-color: #00cc55; }
 
-        @keyframes blink {
-            50% {
-                opacity: 0;
-            }
-        }
+    /* Overlay para holograma */
+    #hologramOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    #hologramOverlay.hidden { display: none; }
 
-        input {
-            background: none;
-            border: none;
-            color: #00ff66;
-            font-family: inherit;
-            font-size: 1.1em;
-            outline: none;
-            width: 150px;
-        }
-
-        .terminal-line {
-            margin-bottom: 10px;
-        }
-
-        .success {
-            color: #00ff66;
-        }
-
-        .error {
-            color: #ff3333;
-        }
-
-        .puzzle-line {
-            margin-top: 20px;
-            color: #00ffff;
-        }
-
-        .download-button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #00ff66;
-            color: #000;
-            border: none;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-
-        .download-button:hover {
-            background-color: #00cc55;
-        }
-
-        /* Overlay para holograma */
-        #hologramOverlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.97);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-        }
-
-        #hologramOverlay.hidden {
-            display: none;
-        }
-
-        #hologramContent video {
-            width: 80%;
-            max-width: 720px;
-            border: 2px solid #00ff66;
-            box-shadow: 0 0 30px #00ff66;
-            filter: brightness(1.2) contrast(1.3) hue-rotate(90deg);
-            border-radius: 8px;
-        }
-    </style>
+    #hologramContent video {
+      width: 80%;
+      max-width: 720px;
+      border: 2px solid #00ff66;
+      box-shadow: 0 0 30px #00ff66;
+      filter: brightness(1.2) contrast(1.3) hue-rotate(90deg);
+      border-radius: 8px;
+    }
+  </style>
 </head>
 
 <body>
-    <audio id="beep" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-game-notification-212.wav"
-        preload="auto"></audio>
-    <audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-notification-2018.wav"
-        preload="auto"></audio>
-    <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.wav"
-        preload="auto"></audio>
+  <audio id="beep" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-game-notification-212.wav" preload="auto"></audio>
+  <audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-notification-2018.wav" preload="auto"></audio>
+  <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.wav" preload="auto"></audio>
 
-    <div id="screen"></div>
+  <div id="screen"></div>
 
-    <!-- Overlay del holograma -->
-    <div id="hologramOverlay" class="hidden">
-        <div id="hologramContent">
-            <video id="holoVideo" src="juls.mp4" autoplay controls></video>
-        </div>
+  <!-- Overlay del holograma -->
+  <div id="hologramOverlay" class="hidden">
+    <div id="hologramContent">
+      <video id="holoVideo" src="juls.mp4" autoplay controls></video>
     </div>
+  </div>
 
-    <script>
-        const screen = document.getElementById('screen');
-        const beep = document.getElementById('beep');
-        const successSound = document.getElementById('successSound');
-        const errorSound = document.getElementById('errorSound');
+  <script>
+    const screen = document.getElementById('screen');
+    const beep = document.getElementById('beep');
+    const successSound = document.getElementById('successSound');
+    const errorSound = document.getElementById('errorSound');
 
-        const lines = [
-            'PROTOCOLO_25 // ACCESO RESTRINGIDO',
-            'Introduce el código de autorización para acceder al sistema:\\n',
-        ];
+    const lines = [
+      'PROTOCOLO_25 // ACCESO RESTRINGIDO',
+      'Introduce el código de autorización para acceder al sistema:\\n',
+    ];
 
-        function printLine(text, delay = 1000) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const div = document.createElement('div');
-                    div.className = 'terminal-line';
-                    div.textContent = text;
-                    screen.appendChild(div);
-                    screen.scrollTop = screen.scrollHeight;
-                    beep.play();
-                    resolve();
-                }, delay);
-            });
-        }
+    function printLine(text, delay = 1000) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const div = document.createElement('div');
+          div.className = 'terminal-line';
+          div.textContent = text;
+          screen.appendChild(div);
+          screen.scrollTop = screen.scrollHeight;
+          beep.play();
+          resolve();
+        }, delay);
+      });
+    }
 
-        async function start() {
-            for (const line of lines) {
-                await printLine(line, 1000);
-            }
-            const inputLine = document.createElement('div');
-            inputLine.className = 'terminal-line';
-            inputLine.innerHTML = 'Código: <input id="codeInput" type="text" maxlength="8" autofocus /><span class="blink">_</span>';
-            screen.appendChild(inputLine);
-            document.getElementById('codeInput').focus();
+    async function start() {
+      for (const line of lines) {
+        await printLine(line, 1000);
+      }
+      const inputLine = document.createElement('div');
+      inputLine.className = 'terminal-line';
+      inputLine.innerHTML = 'Código: <input id="codeInput" type="text" maxlength="8" autofocus /><span class="blink">_</span>';
+      screen.appendChild(inputLine);
+      document.getElementById('codeInput').focus();
 
-            document.getElementById('codeInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    validateCode(e.target.value);
-                }
-            });
-        }
+      document.getElementById('codeInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') validateCode(e.target.value);
+      });
+    }
 
-        function validateCode(code) {
-            const result = document.createElement('div');
-            result.className = 'terminal-line';
-            if (code === '27122000') {
-                result.innerHTML = '<span class="success">Acceso concedido. Bienvenida, Agente Juls.</span>';
-                screen.appendChild(result);
-                successSound.play();
-                setTimeout(showMission, 2000);
-            } else {
-                result.innerHTML = '<span class="error">Error de autenticación. Movimiento no autorizado detectado.</span>';
-                screen.appendChild(result);
-                errorSound.play();
-            }
-        }
+    function validateCode(code) {
+      const result = document.createElement('div');
+      result.className = 'terminal-line';
+      if (code === '27122000') {
+        result.innerHTML = '<span class="success">Acceso concedido. Bienvenida, Agente Juls.</span>';
+        screen.appendChild(result);
+        successSound.play();
+        setTimeout(showMission, 2000);
+      } else {
+        result.innerHTML = '<span class="error">Error de autenticación. Movimiento no autorizado detectado.</span>';
+        screen.appendChild(result);
+        errorSound.play();
+      }
+    }
 
-        function showMission() {
-            screen.innerHTML = '';
-            const missionText = [
-                'Bienvenida, agente.',
-                'Tu misión ha sido activada.',
-                'Objetivo: Restaurar el archivo perdido del PROTOCOLO_25.',
-                'Ubicación: Madrid, Zona Ponzano.',
-                'Hora: 20:00 horas.',
-                'Nivel de prioridad: MÁXIMO.',
-                'Inicia la secuencia cuando estés lista...'
-            ];
-            let delay = 1000;
-            missionText.forEach(line => {
-                printLine(line, delay);
-                delay += 1000;
-            });
-            setTimeout(showPuzzle, 8000);
-        }
+    function showMission() {
+      screen.innerHTML = '';
+      const missionText = [
+        'Bienvenida, agente.',
+        'Tu misión ha sido activada.',
+        'Objetivo: Restaurar el archivo perdido del PROTOCOLO_25.',
+        'Ubicación: Madrid, Zona Ponzano.',
+        'Hora: 20:00 horas.',
+        'Nivel de prioridad: MÁXIMO.',
+        'Demuestra que conoces bien a la Agente Juls para desbloquear la transmisión final...'
+      ];
+      let delay = 1000;
+      missionText.forEach(line => {
+        printLine(line, delay);
+        delay += 1000;
+      });
+      setTimeout(showQuiz1, 8000);
+    }
 
-        function showPuzzle() {
-            const puzzleIntro = document.createElement('div');
-            puzzleIntro.className = 'puzzle-line';
-            puzzleIntro.textContent = '\\nArchivo encriptado detectado.\\nPara restaurar el sistema, responde correctamente:';
-            screen.appendChild(puzzleIntro);
-            const puzzleQuestion = document.createElement('div');
-            puzzleQuestion.className = 'terminal-line';
-            puzzleQuestion.innerHTML = '¿Qué palabra oculta representa el movimiento constante de la misión? (pista: lugar del evento)';
-            screen.appendChild(puzzleQuestion);
-            const puzzleInput = document.createElement('div');
-            puzzleInput.className = 'terminal-line';
-            puzzleInput.innerHTML = 'Respuesta: <input id="puzzleInput" type="text" maxlength="10" autofocus /><span class="blink">_</span>';
-            screen.appendChild(puzzleInput);
-            document.getElementById('puzzleInput').focus();
-            document.getElementById('puzzleInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    checkPuzzle(e.target.value);
-                }
-            });
-        }
+    function showQuiz1() {
+      const q1 = document.createElement('div');
+      q1.className = 'puzzle-line';
+      q1.textContent = '\\nPregunta 1: Equipo favorito de fútbol de la Agente Juls:';
+      screen.appendChild(q1);
+      const inputDiv = document.createElement('div');
+      inputDiv.className = 'terminal-line';
+      inputDiv.innerHTML = 'Respuesta: <input id="quiz1" type="text" autofocus /><span class="blink">_</span>';
+      screen.appendChild(inputDiv);
+      document.getElementById('quiz1').focus();
+      document.getElementById('quiz1').addEventListener('keydown', e => {
+        if (e.key === 'Enter') checkQuiz1(e.target.value);
+      });
+    }
 
-        function checkPuzzle(answer) {
-            const result = document.createElement('div');
-            result.className = 'terminal-line';
-            if (answer.toLowerCase() === 'vaivén' || answer.toLowerCase() === 'vaiven') {
-                result.innerHTML = '<span class="success">Correcto. Archivo restaurado. Misión completada.</span>';
-                screen.appendChild(result);
-                successSound.play();
-                setTimeout(showHologramButton, 2000);
-            } else {
-                result.innerHTML = '<span class="error">Respuesta incorrecta. El sistema permanece bloqueado.</span>';
-                screen.appendChild(result);
-                errorSound.play();
-            }
-        }
+    function checkQuiz1(answer) {
+      if (answer.toLowerCase().includes('madrid')) {
+        showSuccess('Correcto, agente. Sigamos...');
+        setTimeout(showQuiz2, 1500);
+      } else {
+        showError('Respuesta incorrecta. Inténtalo de nuevo.');
+      }
+    }
 
-        function showHologramButton() {
-            const endMessage = document.createElement('div');
-            endMessage.className = 'terminal-line';
-            endMessage.textContent = 'Fin de la transmisión.';
-            screen.appendChild(endMessage);
+    function showQuiz2() {
+      const q2 = document.createElement('div');
+      q2.className = 'puzzle-line';
+      q2.textContent = '\\nPregunta 2: Deporte favorito de la Agente Juls:';
+      screen.appendChild(q2);
+      const inputDiv = document.createElement('div');
+      inputDiv.className = 'terminal-line';
+      inputDiv.innerHTML = 'Respuesta: <input id="quiz2" type="text" autofocus /><span class="blink">_</span>';
+      screen.appendChild(inputDiv);
+      document.getElementById('quiz2').focus();
+      document.getElementById('quiz2').addEventListener('keydown', e => {
+        if (e.key === 'Enter') checkQuiz2(e.target.value);
+      });
+    }
 
-            const holoButton = document.createElement('button');
-            holoButton.className = 'download-button';
-            holoButton.textContent = 'Ver transmisión holográfica de Juls';
-            holoButton.onclick = () => {
-                const overlay = document.getElementById('hologramOverlay');
-                overlay.classList.remove('hidden');
-                const holoVideo = document.getElementById('holoVideo');
-                holoVideo.currentTime = 0;
-                holoVideo.play();
-            };
-            screen.appendChild(holoButton);
-        }
+    function checkQuiz2(answer) {
+      if (answer.toLowerCase().includes('esqui')) {
+        showSuccess('Bien hecho. Una agente en movimiento constante...');
+        setTimeout(showQuiz3, 1500);
+      } else {
+        showError('Respuesta incorrecta. Inténtalo de nuevo.');
+      }
+    }
 
-        start();
-    </script>
+    function showQuiz3() {
+      const q3 = document.createElement('div');
+      q3.className = 'puzzle-line';
+      q3.textContent = '\\nPregunta 3: Universidad de la Agente Juls:';
+      screen.appendChild(q3);
+      const inputDiv = document.createElement('div');
+      inputDiv.className = 'terminal-line';
+      inputDiv.innerHTML = 'Respuesta: <input id="quiz3" type="text" autofocus /><span class="blink">_</span>';
+      screen.appendChild(inputDiv);
+      document.getElementById('quiz3').focus();
+      document.getElementById('quiz3').addEventListener('keydown', e => {
+        if (e.key === 'Enter') checkQuiz3(e.target.value);
+      });
+    }
+
+    function checkQuiz3(answer) {
+      if (answer.toLowerCase().includes('ceu')) {
+        showSuccess('Perfecto. Has demostrado conocer bien a la Agente Juls.');
+        setTimeout(showFinalCode, 2000);
+      } else {
+        showError('Respuesta incorrecta. Inténtalo de nuevo.');
+      }
+    }
+
+    function showFinalCode() {
+      const msg = document.createElement('div');
+      msg.className = 'terminal-line';
+      msg.innerHTML = '<span class=\"success\">Código secreto de la misión Cuarto de Siglo: <strong>J25-CELEBRATION</strong></span>';
+      screen.appendChild(msg);
+      successSound.play();
+      setTimeout(showHologramButton, 2500);
+    }
+
+    function showSuccess(msg) {
+      const el = document.createElement('div');
+      el.className = 'terminal-line success';
+      el.textContent = msg;
+      screen.appendChild(el);
+      successSound.play();
+    }
+
+    function showError(msg) {
+      const el = document.createElement('div');
+      el.className = 'terminal-line error';
+      el.textContent = msg;
+      screen.appendChild(el);
+      errorSound.play();
+    }
+
+    function showHologramButton() {
+      const endMessage = document.createElement('div');
+      endMessage.className = 'terminal-line';
+      endMessage.textContent = '\\nFin de la transmisión.';
+      screen.appendChild(endMessage);
+
+      const holoButton = document.createElement('button');
+      holoButton.className = 'download-button';
+      holoButton.textContent = 'Ver transmisión holográfica de Juls';
+      holoButton.onclick = () => {
+        const overlay = document.getElementById('hologramOverlay');
+        overlay.classList.remove('hidden');
+        const holoVideo = document.getElementById('holoVideo');
+        holoVideo.currentTime = 0;
+        holoVideo.play();
+      };
+      screen.appendChild(holoButton);
+    }
+
+    start();
+  </script>
 </body>
-
 </html>
