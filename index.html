@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Protocolo 25 - Archivo Secreto</title>
   <style>
     body {
@@ -10,13 +10,38 @@
       background-color: #000;
       color: #00ff66;
       font-family: 'Courier New', monospace;
-      overflow: hidden;
+      overflow-y: auto; /* ✅ permitir scroll vertical */
+      overflow-x: hidden;
     }
+
     #screen {
       padding: 20px;
       white-space: pre-line;
-      font-size: 1.1em;
+      font-size: 1.05em;
+      line-height: 1.5;
+      min-height: 100vh;
     }
+
+    /* mejora para pantallas pequeñas */
+    @media (max-width: 768px) {
+      #screen {
+        padding: 16px;
+        font-size: 1em;
+        line-height: 1.4;
+      }
+      input {
+        width: 100%;
+        max-width: 260px;
+      }
+      .download-button {
+        width: 90%;
+        font-size: 1em;
+      }
+      #hologramContent video {
+        width: 95%;
+      }
+    }
+
     .hidden { display: none; }
     .blink { animation: blink 1s infinite; }
     @keyframes blink { 50% { opacity: 0; } }
@@ -105,8 +130,10 @@
           div.className = 'terminal-line';
           div.textContent = text;
           screen.appendChild(div);
-          screen.scrollTop = screen.scrollHeight;
           beep.play();
+          /* ✅ scroll automático siempre al final */
+          screen.scrollTop = screen.scrollHeight;
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
           resolve();
         }, delay);
       });
@@ -140,6 +167,7 @@
         screen.appendChild(result);
         errorSound.play();
       }
+      screen.scrollTop = screen.scrollHeight;
     }
 
     function showMission() {
@@ -161,6 +189,11 @@
       setTimeout(showQuiz1, 8000);
     }
 
+    function scrollBottom() {
+      screen.scrollTop = screen.scrollHeight;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
     function showQuiz1() {
       const q1 = document.createElement('div');
       q1.className = 'puzzle-line';
@@ -174,15 +207,15 @@
       document.getElementById('quiz1').addEventListener('keydown', e => {
         if (e.key === 'Enter') checkQuiz1(e.target.value);
       });
+      scrollBottom();
     }
 
     function checkQuiz1(answer) {
       if (answer.toLowerCase().includes('madrid')) {
         showSuccess('Correcto, agente. Sigamos...');
         setTimeout(showQuiz2, 1500);
-      } else {
-        showError('Respuesta incorrecta. Inténtalo de nuevo.');
-      }
+      } else showError('Respuesta incorrecta. Inténtalo de nuevo.');
+      scrollBottom();
     }
 
     function showQuiz2() {
@@ -198,15 +231,15 @@
       document.getElementById('quiz2').addEventListener('keydown', e => {
         if (e.key === 'Enter') checkQuiz2(e.target.value);
       });
+      scrollBottom();
     }
 
     function checkQuiz2(answer) {
       if (answer.toLowerCase().includes('esqui')) {
         showSuccess('Bien hecho. Una agente en movimiento constante...');
         setTimeout(showQuiz3, 1500);
-      } else {
-        showError('Respuesta incorrecta. Inténtalo de nuevo.');
-      }
+      } else showError('Respuesta incorrecta. Inténtalo de nuevo.');
+      scrollBottom();
     }
 
     function showQuiz3() {
@@ -222,15 +255,15 @@
       document.getElementById('quiz3').addEventListener('keydown', e => {
         if (e.key === 'Enter') checkQuiz3(e.target.value);
       });
+      scrollBottom();
     }
 
     function checkQuiz3(answer) {
       if (answer.toLowerCase().includes('ceu')) {
         showSuccess('Perfecto. Has demostrado conocer bien a la Agente Juls.');
         setTimeout(showFinalCode, 2000);
-      } else {
-        showError('Respuesta incorrecta. Inténtalo de nuevo.');
-      }
+      } else showError('Respuesta incorrecta. Inténtalo de nuevo.');
+      scrollBottom();
     }
 
     function showFinalCode() {
@@ -240,6 +273,7 @@
       screen.appendChild(msg);
       successSound.play();
       setTimeout(showHologramButton, 2500);
+      scrollBottom();
     }
 
     function showSuccess(msg) {
@@ -248,6 +282,7 @@
       el.textContent = msg;
       screen.appendChild(el);
       successSound.play();
+      scrollBottom();
     }
 
     function showError(msg) {
@@ -256,6 +291,7 @@
       el.textContent = msg;
       screen.appendChild(el);
       errorSound.play();
+      scrollBottom();
     }
 
     function showHologramButton() {
@@ -275,6 +311,7 @@
         holoVideo.play();
       };
       screen.appendChild(holoButton);
+      scrollBottom();
     }
 
     start();
